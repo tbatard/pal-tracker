@@ -1,0 +1,16 @@
+inputs:
+- name: master
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: tbatard/openjdk-8
+
+run:
+  dir: master
+  path: sh
+  args:
+  - -exc
+  - ./gradlew build
