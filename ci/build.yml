@@ -3,7 +3,7 @@ inputs:
 
 outputs:
 - name: build-artifact
-  path: master/build/libs/pal-tracker*.jar
+  path: build/libs/pal-tracker*.jar
 
 platform: linux
 
