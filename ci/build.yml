@@ -3,7 +3,7 @@ inputs:
 
 outputs:
 - name: build-artifact
-  path: build/libs/pal-tracker*.jar
+  path: build/libs/pal-tracker.jar
 
 platform: linux
 
@@ -17,4 +17,4 @@ run:
   path: sh
   args:
   - -exc
-  - ./gradlew build
+  - ./gradlew clean build
