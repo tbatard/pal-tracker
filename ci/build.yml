@@ -1,6 +1,10 @@
 inputs:
 - name: master
 
+outputs:
+- name: build-artifact
+  path: master/build/libs/pal-tracker*.jar
+
 platform: linux
 
 image_resource:
