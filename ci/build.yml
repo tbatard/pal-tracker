@@ -3,7 +3,6 @@ inputs:
 
 outputs:
 - name: build-artifact
-  path: build/libs/**.jar
 
 platform: linux
 
@@ -16,8 +15,7 @@ run:
   dir: master
   path: sh
   args:
-  - -exc
+  - -c
   - |
-    ./gradlew clean build
-    mkdir build-artifact
-    cp build/libs/*.jar build-artifact/
+    ./gradlew build
+    cp build/libs/*.jar ../build-artifact/
