@@ -1,5 +1,6 @@
 inputs:
 - name: master
+- name: version
 
 outputs:
 - name: build-artifact
@@ -18,4 +19,4 @@ run:
   - -c
   - |
     ./gradlew build
-    cp build/libs/*.jar ../build-artifact/
+    cp build/libs/*.jar ../build-artifact/hello-spring-$(cat ../version/version).jar
