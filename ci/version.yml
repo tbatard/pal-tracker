@@ -1,0 +1,19 @@
+inputs:
+- name: version
+- name: build-artifacts
+
+outputs:
+- name: release-artifact
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: tbatard/openjdk-8
+
+run:
+  path: sh
+  args:
+  - -c
+  - cp build-artifacts/*.jar release-artifact/hello-spring-$(cat version/version).jar

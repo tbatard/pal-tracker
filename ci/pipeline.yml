@@ -26,6 +26,13 @@ resources:
     storage_account_name: {{azure-storage-account-name}}
     storage_access_key: {{azure-storage-access-key}}
     regexp: builds/hello-spring-((\d\.){2}\d(-alpha\.\d){0,1}).jar
+- name: release-artifacts
+  type: azure-blobstore
+  source:
+    container: concourse
+    storage_account_name: {{azure-storage-account-name}}
+    storage_access_key: {{azure-storage-access-key}}
+    regexp: releases/hello-spring-((\d\.){2}\d).jar
 - name: acceptance
   type: cf
   source:
@@ -49,7 +56,7 @@ jobs:
     file: master/ci/build.yml
   - put: build-artifacts
     params:
-      file: ./build-artifact/hello-spring-*.jar
+      file: build-artifact/hello-spring-*.jar
   - put: version
     params:
       file: version/version
@@ -66,3 +73,21 @@ jobs:
       path: build-artifacts/hello-spring-*.jar
       environment_variables:
         WELCOME_MESSAGE: {{hello-spring-welcome-message}}
+- name: Major
+  serial: true
+  plan:
+  - get: master
+    passed: [Acceptance]
+  - get: version
+    params:
+      bump: major
+  - get: build-artifacts
+    passed: [Acceptance]
+  - task: Bump major
+    file: master/ci/version.yml
+  - put: release-artifacts
+    params:
+      file: release-artifact/hello-spring-*.jar
+  - put: version
+    params:
+      file: version/version
