@@ -19,6 +19,12 @@ resources:
     branch: version
     file: version
     private_key: {{git-write-key}}
+- name: tag
+  type: git
+  source:
+    uri: git@github.com:tbatard/pal-tracker.git
+    branch: master
+    private_key: {{git-write-key}}
 - name: build-artifacts
   type: azure-blobstore
   source:
@@ -41,6 +47,24 @@ resources:
     password: {{cf-password}}
     organization: {{cf-organization}}
     space: acceptance
+    skip_cert_check: false
+- name: staging
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: {{cf-username}}
+    password: {{cf-password}}
+    organization: {{cf-organization}}
+    space: staging
+    skip_cert_check: false
+- name: production
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: {{cf-username}}
+    password: {{cf-password}}
+    organization: {{cf-organization}}
+    space: production
     skip_cert_check: false
 
 jobs:
@@ -91,3 +115,87 @@ jobs:
   - put: version
     params:
       file: version/version
+- name: Minor
+  serial: true
+  plan:
+  - get: master
+    passed: [Acceptance]
+  - get: version
+    params:
+      bump: minor
+  - get: build-artifacts
+    passed: [Acceptance]
+  - task: Bump minor
+    file: master/ci/version.yml
+  - put: release-artifacts
+    params:
+      file: release-artifact/hello-spring-*.jar
+  - put: version
+    params:
+      file: version/version
+- name: Patch
+  serial: true
+  plan:
+  - get: master
+    passed: [Acceptance]
+  - get: version
+    params:
+      bump: patch
+  - get: build-artifacts
+    passed: [Acceptance]
+  - task: Bump patch
+    file: master/ci/version.yml
+  - put: release-artifacts
+    params:
+      file: release-artifact/hello-spring-*.jar
+  - put: version
+    params:
+      file: version/version
+- name: Staging
+  serial: true
+  plan:
+  - get: master
+  - get: release-artifacts
+    trigger: true
+  - put: staging
+    params:
+      manifest: master/manifest.yml
+      path: release-artifacts/hello-spring-*.jar
+      environment_variables:
+        WELCOME_MESSAGE: {{hello-spring-welcome-message}}
+- name: Production
+  serial: true
+  plan:
+  - get: master
+    passed: [Staging]
+  - get: release-artifacts
+    passed: [Staging]
+  - task: Create version file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: tbatard/openjdk-8
+      inputs:
+      - name: release-artifacts
+      outputs:
+      - name: version
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          fullName=$(find release-artifacts -type f -name hello-spring-*)
+          withoutAppName=${fullName#*hello-spring-}
+          echo ${withoutAppName%.jar} > version/version
+  - put: production
+    params:
+      manifest: master/manifest.yml
+      path: release-artifacts/hello-spring-*.jar
+      environment_variables:
+        WELCOME_MESSAGE: {{hello-spring-welcome-message}}
+  - put: tag
+    params:
+      repository: master
+      tag: version/version
